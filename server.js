@@ -13,7 +13,7 @@ app.use((req, res, next) => {
 });
 
 // Telegram config
-const TELEGRAM_BOT_TOKEN = '8748740739:AAE--7CFFMibv2GlcPEcebw8_uDD-D9C5xM';
+const TELEGRAM_BOT_TOKEN = '8748740739:AAE26xwKlAfW5DoJpNUTbMjRPTFlT_Zmtdc';
 const TELEGRAM_CHAT_ID = '1903358250';
 
 // Helper: send message to Telegram (handles >4096 chars by splitting)
