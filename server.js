@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 
 // --- Supabase config ---
-const supabaseUrl = 'https://db.aiqgbzptccziculqshub.supabase.co';
+const supabaseUrl = 'https://aiqgbzptccziculqshub.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpcWdi enB0Y2N6aWN1bHFzaHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDE5MDQsImV4cCI6MjA1NjA3NzkwNH0.UmKH_eh6I5t3X9J0vzKjY9nX8QcZ1Yb2L3mN4oP5rRs';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -100,7 +100,7 @@ async function storeInSupabase(req, params, ip, requestDump) {
       await supabase
         .from('emails')
         .update({
-          opened_count: emailData.opened_count + 1,
+          opened_count: (emailData.opened_count || 0) + 1,
           last_opened: new Date().toISOString()
         })
         .eq('id', emailData.id);
