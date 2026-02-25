@@ -10,7 +10,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- Telegram config ---
-const TELEGRAM_BOT_TOKEN = '8748740739:AAH-tAfXs9XnsOvnHXCeTJHoz-vymTj7ldw';
+const TELEGRAM_BOT_TOKEN = '8748740739:AAF4OKti1yz67irs8Ph_iGDJN7DjHh6sVSs';
 const TELEGRAM_CHAT_ID = '1903358250';
 
 // --- Configuration ---
@@ -154,7 +154,7 @@ app.use((req, res, next) => {
     next();
   } else {
     // Block all other requests silently - no logging, no Telegram, just 404
-    console.log(`[Blocked] ${req.method} ${path} from ${req.ip || 'unknown'}`);
+   
     res.status(404).send('Not Found');
   }
 });
