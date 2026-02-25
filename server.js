@@ -6,12 +6,15 @@ const app = express();
 
 // --- Supabase config ---
 const supabaseUrl = 'https://aiqgbzptccziculqshub.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpcWdi enB0Y2N6aWN1bHFzaHViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1MDE5MDQsImV4cCI6MjA1NjA3NzkwNH0.UmKH_eh6I5t3X9J0vzKjY9nX8QcZ1Yb2L3mN4oP5rRs';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpcWdienB0Y2N6aWN1bHFzaHViIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjAyODYyMywiZXhwIjoyMDg3NjA0NjIzfQ.xf4lg1EUv5zTgfMtx9rl8vZQQssEwl1GUdCt006v9co';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- Telegram config ---
 const TELEGRAM_BOT_TOKEN = '8748740739:AAF4OKti1yz67irs8Ph_iGDJN7DjHh6sVSs';
 const TELEGRAM_CHAT_ID = '1903358250';
+
+// --- My own IP - don't record opens from this ---
+const MY_IPS = new Set(['79.127.160.188']);
 
 // --- Configuration ---
 const ALLOWED_PATHS = new Set([
@@ -186,9 +189,18 @@ app.get('*', async (req, res) => {
     }
   };
 
+  // Skip recording if this is my own IP
+  if (MY_IPS.has(ip)) {
+    console.log(`[Tracker] Skipping own IP ${ip}`);
+    res.setHeader('Content-Type', 'image/gif');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.send(Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64'));
+    return;
+  }
+
   // Store in Supabase (background)
   if (params.user_id !== 'unknown' && params.company_name !== 'unknown' && params.email !== 'unknown') {
-    storeInSupabase(req, params, ip, requestDump).catch(e => 
+    storeInSupabase(req, params, ip, requestDump).catch(e =>
       console.error('[Supabase] Background error:', e)
     );
   }
