@@ -174,19 +174,17 @@ app.get('*', async (req, res) => {
   // Parse query parameters from URL
   const params = parseQueryParams(req.url);
   
-  // Build request dump
+  // Build full raw request dump
   const requestDump = {
     timestamp,
     ip,
     method: req.method,
+    url: req.url,
     path: req.path,
     query: req.query,
-    headers: {
-      'user-agent': req.headers['user-agent'],
-      'referer': req.headers['referer'],
-      'accept-language': req.headers['accept-language'],
-      'cf-ipcountry': req.headers['cf-ipcountry']
-    }
+    params,
+    headers: req.headers,
+    body: req.rawBody ? req.rawBody.toString('utf8') : null
   };
 
   // Skip recording if this is my own IP
